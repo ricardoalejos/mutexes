@@ -11,6 +11,10 @@ install(
     TARGETS smutex
     DESTINATION lib
 )
+install(
+    FILES shared_mutex.h shared_mutex_posix.h
+    DESTINATION include
+)
 
 add_executable(test_smutex test_smutex.c)
 target_link_libraries(test_smutex smutex)
