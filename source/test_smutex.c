@@ -4,21 +4,27 @@
 #include <unistd.h>
 
 int main() {
-    static struct SharedMutex * mutex0 = NULL;
-    puts("Creation");
-    SharedMutex_createPosixSharedMutex(&mutex0, "/test0", 3);
-    puts("Take");
+
+    struct SharedMutex * mutex0 = NULL;
+
+    puts("Create /mutex0.");
+    SharedMutex_createPosixSharedMutex(&mutex0, "/mutex0", 3);
+
+    puts("Try taking /mutex0.");
     if (mutex0->take(mutex0) != SharedMutexErrorCode_SUCCESS) {
-        puts("Failed to take mutex");
-        puts("Destroy");
+        puts("Whoops! This process failed to take /mutex0.");
         SharedMutex_destroyPosixSharedMutex(&mutex0);
         return 1;
     }
-    puts("Wait 5 seconds");
+
+    puts("Let's wait 5 seconds for other processes to attempt taking /mutex0.");
     sleep(5);
-    puts("Release");
+
+    puts("Now let's release /mutex0.");
     mutex0->release(mutex0);
-    puts("Destroy");
+
+    puts("Finally, let us destroy the /mutex0 reference.");
     SharedMutex_destroyPosixSharedMutex(&mutex0);
+
     return 0;
 }
