@@ -8,4 +8,6 @@ If a user spawns two processes that take the same shared mutex, one of the two w
 
 ## Build instructions
 
-Run the "setenv.sh" and "build.sh" scripts (in that order). If the build is successful, the test application (test_smutex) should become available in the "out/bin" directory. The library and its public headers will become available in the "out/lib" and "out/include" directories.
+Run the "build.sh" script. If the build is successful, the test application (test_smutex) should become available in the "out/bin" directory. The library and its public headers will become available in the "out/lib" and "out/include" directories.
+
+If you wished to remove the output artifacts and the build temporary files, you can run the "clean.sh" script. This script removes the output directory.
