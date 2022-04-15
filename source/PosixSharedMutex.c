@@ -1,4 +1,4 @@
-#include "shared_mutex_posix.h"
+#include "PosixSharedMutex.h"
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,7 +11,7 @@
 #include <string.h>         // strcpy
 
 struct PosixSharedMutex {
-    struct SharedMutex base;
+    Mutex base;
     int fileDescriptor;
     char name[128];
     pthread_mutex_t * pMutex;
@@ -19,11 +19,16 @@ struct PosixSharedMutex {
     unsigned long timeout;
 };
 
-static int take(struct SharedMutex * mutex);
-static int release(struct SharedMutex * mutex);
+static int take(Mutex * mutex);
+static int release(Mutex * mutex);
 
-int SharedMutex_createPosixSharedMutex(
-    struct SharedMutex ** mutex,
+const struct MutexInterface posixSharedMutexInterface = {
+    .release=release,
+    .take=take
+};
+
+int Mutex_createPosixSharedMutex(
+    Mutex ** mutex,
     char * name,
     unsigned long timeout
 ) {
@@ -33,8 +38,8 @@ int SharedMutex_createPosixSharedMutex(
         )
     );
 
-    posixSharedMutex->base.take = take;
-    posixSharedMutex->base.release = release;
+    posixSharedMutex->base.implementationInterface=&posixSharedMutexInterface;
+    posixSharedMutex->base.instanceData = (void *)posixSharedMutex;
     strncpy(posixSharedMutex->name, name, 128);
 
     posixSharedMutex->createdFlag = false;
@@ -59,7 +64,7 @@ int SharedMutex_createPosixSharedMutex(
         sizeof(pthread_mutex_t)
     );
     if (feedback != 0) {
-        return SharedMutexPosixErrorCode_FTRUNCATE_FAILED;
+        return MutexErrorCode_FTRUNCATE_FAILED;
     }
 
     posixSharedMutex->pMutex = (pthread_mutex_t *) mmap(
@@ -81,39 +86,37 @@ int SharedMutex_createPosixSharedMutex(
     }
     *mutex = &(posixSharedMutex->base);
 
-    return SharedMutexErrorCode_SUCCESS;
+    return MutexErrorCode_SUCCESS;
 }
 
-int SharedMutex_destroyPosixSharedMutex(struct SharedMutex ** mutex) {
+int Mutex_destroyPosixSharedMutex(Mutex ** mutex) {
     struct PosixSharedMutex * posixSharedMutex = *(
         (struct PosixSharedMutex **) mutex
     );
     if (posixSharedMutex->createdFlag) {
         if ((errno = pthread_mutex_destroy(posixSharedMutex->pMutex))) {
-            return SharedMutexPosixErrorCode_PTHREAD_MUTEX_DESTROY_FAILED;
+            return MutexErrorCode_PTHREAD_MUTEX_DESTROY_FAILED;
         }
     }
     if (munmap((void *)posixSharedMutex->pMutex, sizeof(pthread_mutex_t))) {
-        return SharedMutexPosixErrorCode_MUNMAP_FAILED;
+        return MutexErrorCode_MUNMAP_FAILED;
     }
     *mutex = NULL;
     if (close(posixSharedMutex->fileDescriptor)) {
-        return SharedMutexPosixErrorCode_CANNOT_CLOSE_SHARED_MUTEX;
+        return MutexErrorCode_CANNOT_CLOSE_SHARED_MUTEX;
     }
     posixSharedMutex->fileDescriptor = 0;
     if (posixSharedMutex->createdFlag) {
         if (shm_unlink(posixSharedMutex->name)) {
-            return SharedMutexPosixErrorCode_SHMUNLINK_FAILED;
+            return MutexErrorCode_SHMUNLINK_FAILED;
         }
     }
     free(posixSharedMutex);
-    return SharedMutexErrorCode_SUCCESS;
+    return MutexErrorCode_SUCCESS;
 }
 
-static int take(struct SharedMutex * mutex) {
-    struct PosixSharedMutex * posixSharedMutex = (
-        (struct PosixSharedMutex *) mutex
-    );
+static int take(Mutex * mutex) {
+    struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     struct timespec timeoutSpec = {0};
     clock_gettime(CLOCK_REALTIME, &timeoutSpec);
     timeoutSpec.tv_sec += posixSharedMutex->timeout;
@@ -122,21 +125,19 @@ static int take(struct SharedMutex * mutex) {
         &timeoutSpec
     );
     if (feedback == 0) {
-        return SharedMutexErrorCode_SUCCESS;
+        return MutexErrorCode_SUCCESS;
     } else if (feedback == ETIMEDOUT) {
-        return SharedMutexPosixErrorCode_TIMEOUT;
+        return MutexErrorCode_TIMEOUT;
     } else {
-        return SharedMutexPosixErrorCode_PTHREAD_MUTEX_TIMEDLOCK_FAILED;
+        return MutexErrorCode_PTHREAD_MUTEX_TIMEDLOCK_FAILED;
     }
 }
 
-static int release(struct SharedMutex * mutex) {
-    struct PosixSharedMutex * posixSharedMutex = (
-        (struct PosixSharedMutex *) mutex
-    );
+static int release(Mutex * mutex) {
+    struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     int feedback = pthread_mutex_unlock(posixSharedMutex->pMutex);
     if (feedback != 0) {
-        return SharedMutexPosixErrorCode_PTHREAD_MUTEX_UNLOCK_FAILED;
+        return MutexErrorCode_PTHREAD_MUTEX_UNLOCK_FAILED;
     }
-    return SharedMutexErrorCode_SUCCESS;
+    return MutexErrorCode_SUCCESS;
 }
