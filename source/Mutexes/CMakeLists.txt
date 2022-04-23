@@ -1,6 +1,6 @@
 configure_file(
     Version.h.in
-    ${CMAKE_INSTALL_PREFIX}/include/Mutex/Version.h
+    ${CMAKE_CURRENT_LIST_DIR}/Version.h
     @ONLY
 )
 file(GLOB_RECURSE sources
@@ -18,6 +18,6 @@ install(
     DESTINATION lib
 )
 install(
-    FILES Mutex.h PosixSharedMutex.h VerboseSharedMutex.h
+    FILES Mutex.h PosixSharedMutex.h VerboseSharedMutex.h Version.h
     DESTINATION include/Mutex
 )

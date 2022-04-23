@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(
     Mutexes
     LANGUAGES C
-    VERSION 0.0.1
+    VERSION 0.0.2
 )
 
 execute_process(
