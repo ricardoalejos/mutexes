@@ -1,4 +1,4 @@
-#include "Mutex/PosixSharedMutex.h"
+#include "Mutexes/PosixSharedMutex.h"
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -8,12 +8,12 @@ int main() {
     Mutex * mutex0 = NULL;
 
     puts("Create /mutex0.");
-    Mutex_createPosixSharedMutex(&mutex0, "/mutex0", 3);
+    PosixSharedMutex_create(&mutex0, "/mutex0", 3);
 
     puts("Try taking /mutex0.");
     if (Mutex_take(mutex0) != MutexErrorCode_SUCCESS) {
         puts("Whoops! This process failed to take /mutex0.");
-        Mutex_destroyPosixSharedMutex(&mutex0);
+        PosixSharedMutex_destroy(&mutex0);
         return 1;
     }
 
@@ -24,7 +24,7 @@ int main() {
     Mutex_release(mutex0);
 
     puts("Finally, let us destroy the /mutex0 reference.");
-    Mutex_destroyPosixSharedMutex(&mutex0);
+    PosixSharedMutex_destroy(&mutex0);
 
     return 0;
 }

@@ -1,0 +1,15 @@
+#ifndef _MUTEXES_VERSION_H_
+#define _MUTEXES_VERSION_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MUTEXES_COMMIT "@Mutexes_COMMIT_ID@"
+#define MUTEXES_VERSION "@Mutexes_VERSION@"
+
+#ifdef __cplusplus
+} // Extern "C"
+#endif
+
+#endif

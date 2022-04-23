@@ -1,11 +1,11 @@
-#ifndef _POSIX_SHARED_MUTEX_H_
-#define _POSIX_SHARED_MUTEX_H_
+#ifndef _MUTEXES_POSIX_SHARED_MUTEX_H_
+#define _MUTEXES_POSIX_SHARED_MUTEX_H_
 
-#include "MutexImplementation.h"
+#include "Mutexes/Mutex.h"
 
 // Creates a shared mutex for which the "take" function times out after
 // "timeout" seconds.
-int Mutex_createPosixSharedMutex(
+int PosixSharedMutex_create(
     Mutex ** mutex,
     char * name,
     unsigned long timeout
@@ -15,6 +15,6 @@ int Mutex_createPosixSharedMutex(
 // also deletes the underlying shared mutex file under /dev/shm if this
 // was the process that created it. If other process created the mutex, then
 // this function will leave it in /dev/shm
-int Mutex_destroyPosixSharedMutex(Mutex ** mutex);
+int PosixSharedMutex_destroy(Mutex ** mutex);
 
 #endif

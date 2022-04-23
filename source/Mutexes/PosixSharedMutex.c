@@ -1,4 +1,5 @@
-#include "PosixSharedMutex.h"
+#include "Mutexes/PosixSharedMutex.h"
+#include "Mutexes/MutexImplementation.h"
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,15 +20,15 @@ struct PosixSharedMutex {
     unsigned long timeout;
 };
 
-static int take(Mutex * mutex);
-static int release(Mutex * mutex);
+static MutexErrorCode take(Mutex * mutex);
+static MutexErrorCode release(Mutex * mutex);
 
 const struct MutexInterface posixSharedMutexInterface = {
     .release=release,
     .take=take
 };
 
-int Mutex_createPosixSharedMutex(
+int PosixSharedMutex_create(
     Mutex ** mutex,
     char * name,
     unsigned long timeout
@@ -39,7 +40,7 @@ int Mutex_createPosixSharedMutex(
     );
 
     posixSharedMutex->base.implementationInterface=&posixSharedMutexInterface;
-    posixSharedMutex->base.instanceData = (void *)posixSharedMutex;
+    posixSharedMutex->base.instanceData = (Mutex *)posixSharedMutex;
     strncpy(posixSharedMutex->name, name, 128);
 
     posixSharedMutex->createdFlag = false;
@@ -89,7 +90,7 @@ int Mutex_createPosixSharedMutex(
     return MutexErrorCode_SUCCESS;
 }
 
-int Mutex_destroyPosixSharedMutex(Mutex ** mutex) {
+int PosixSharedMutex_destroy(Mutex ** mutex) {
     struct PosixSharedMutex * posixSharedMutex = *(
         (struct PosixSharedMutex **) mutex
     );
@@ -115,7 +116,7 @@ int Mutex_destroyPosixSharedMutex(Mutex ** mutex) {
     return MutexErrorCode_SUCCESS;
 }
 
-static int take(Mutex * mutex) {
+static MutexErrorCode take(Mutex * mutex) {
     struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     struct timespec timeoutSpec = {0};
     clock_gettime(CLOCK_REALTIME, &timeoutSpec);
@@ -133,7 +134,7 @@ static int take(Mutex * mutex) {
     }
 }
 
-static int release(Mutex * mutex) {
+static MutexErrorCode release(Mutex * mutex) {
     struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     int feedback = pthread_mutex_unlock(posixSharedMutex->pMutex);
     if (feedback != 0) {

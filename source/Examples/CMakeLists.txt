@@ -1,6 +1,6 @@
-add_executable(test_smutex test_smutex.c)
-target_link_libraries(test_smutex mutex)
+add_executable(sharedMutexDemo sharedMutexDemo.c)
+target_link_libraries(sharedMutexDemo mutexes)
 install(
-    TARGETS test_smutex
+    TARGETS sharedMutexDemo
     DESTINATION bin
 )
