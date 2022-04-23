@@ -3,7 +3,7 @@
 
 typedef enum {
     MutexErrorCode_SUCCESS,
-    MutexErrorCode_ERROR_BASE,
+    MutexErrorCode_ERROR,
     MutexErrorCode_CANNOT_OPEN_SHARED_MUTEX,
     MutexErrorCode_CANNOT_CLOSE_SHARED_MUTEX,
     MutexErrorCode_FTRUNCATE_FAILED,
