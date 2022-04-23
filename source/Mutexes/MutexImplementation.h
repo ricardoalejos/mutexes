@@ -14,8 +14,8 @@
 #include "Mutexes/Mutex.h"
 
 struct MutexInterface {
-    MutexErrorCode (*take)(Mutex * mutex);
-    MutexErrorCode (*release)(Mutex * mutex);
+    MutexReturnCode (*take)(Mutex * mutex);
+    MutexReturnCode (*release)(Mutex * mutex);
 };
 
 struct MutexStructure {

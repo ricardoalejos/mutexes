@@ -18,6 +18,6 @@ install(
     DESTINATION lib
 )
 install(
-    FILES Mutex.h PosixSharedMutex.h
+    FILES Mutex.h PosixSharedMutex.h VerboseSharedMutex.h
     DESTINATION include/Mutex
 )

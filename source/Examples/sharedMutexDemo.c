@@ -4,11 +4,9 @@
 #include <unistd.h>
 
 int main() {
-
     Mutex * mutex0 = NULL;
     VerboseSharedMutex_create(&mutex0, "/mutex0", 3);
-    if (Mutex_take(mutex0) != MutexErrorCode_SUCCESS) {
-        puts("Whoops! This process failed to take /mutex0.");
+    if (Mutex_take(mutex0) != MutexReturnCode_SUCCESS) {
         VerboseSharedMutex_destroy(&mutex0);
         return 1;
     }
@@ -16,6 +14,5 @@ int main() {
     sleep(5);
     Mutex_release(mutex0);
     VerboseSharedMutex_destroy(&mutex0);
-
     return 0;
 }

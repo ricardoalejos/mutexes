@@ -20,15 +20,15 @@ struct PosixSharedMutex {
     unsigned long timeout;
 };
 
-static MutexErrorCode take(Mutex * mutex);
-static MutexErrorCode release(Mutex * mutex);
+static MutexReturnCode take(Mutex * mutex);
+static MutexReturnCode release(Mutex * mutex);
 
 const struct MutexInterface posixSharedMutexInterface = {
     .release=release,
     .take=take
 };
 
-int PosixSharedMutex_create(
+MutexReturnCode PosixSharedMutex_create(
     Mutex ** mutex,
     char * name,
     unsigned long timeout
@@ -65,7 +65,7 @@ int PosixSharedMutex_create(
         sizeof(pthread_mutex_t)
     );
     if (feedback != 0) {
-        return MutexErrorCode_FTRUNCATE_FAILED;
+        return MutexReturnCode_ERROR;
     }
 
     posixSharedMutex->pMutex = (pthread_mutex_t *) mmap(
@@ -87,36 +87,36 @@ int PosixSharedMutex_create(
     }
     *mutex = &(posixSharedMutex->base);
 
-    return MutexErrorCode_SUCCESS;
+    return MutexReturnCode_SUCCESS;
 }
 
-int PosixSharedMutex_destroy(Mutex ** mutex) {
+MutexReturnCode PosixSharedMutex_destroy(Mutex ** mutex) {
     struct PosixSharedMutex * posixSharedMutex = *(
         (struct PosixSharedMutex **) mutex
     );
     if (posixSharedMutex->createdFlag) {
         if ((errno = pthread_mutex_destroy(posixSharedMutex->pMutex))) {
-            return MutexErrorCode_PTHREAD_MUTEX_DESTROY_FAILED;
+            return MutexReturnCode_ERROR;
         }
     }
     if (munmap((void *)posixSharedMutex->pMutex, sizeof(pthread_mutex_t))) {
-        return MutexErrorCode_MUNMAP_FAILED;
+        return MutexReturnCode_ERROR;
     }
     *mutex = NULL;
     if (close(posixSharedMutex->fileDescriptor)) {
-        return MutexErrorCode_CANNOT_CLOSE_SHARED_MUTEX;
+        return MutexReturnCode_ERROR;
     }
     posixSharedMutex->fileDescriptor = 0;
     if (posixSharedMutex->createdFlag) {
         if (shm_unlink(posixSharedMutex->name)) {
-            return MutexErrorCode_SHMUNLINK_FAILED;
+            return MutexReturnCode_ERROR;
         }
     }
     free(posixSharedMutex);
-    return MutexErrorCode_SUCCESS;
+    return MutexReturnCode_SUCCESS;
 }
 
-static MutexErrorCode take(Mutex * mutex) {
+static MutexReturnCode take(Mutex * mutex) {
     struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     struct timespec timeoutSpec = {0};
     clock_gettime(CLOCK_REALTIME, &timeoutSpec);
@@ -126,19 +126,19 @@ static MutexErrorCode take(Mutex * mutex) {
         &timeoutSpec
     );
     if (feedback == 0) {
-        return MutexErrorCode_SUCCESS;
+        return MutexReturnCode_SUCCESS;
     } else if (feedback == ETIMEDOUT) {
-        return MutexErrorCode_TIMEOUT;
+        return MutexReturnCode_ERROR;
     } else {
-        return MutexErrorCode_PTHREAD_MUTEX_TIMEDLOCK_FAILED;
+        return MutexReturnCode_ERROR;
     }
 }
 
-static MutexErrorCode release(Mutex * mutex) {
+static MutexReturnCode release(Mutex * mutex) {
     struct PosixSharedMutex * posixSharedMutex = (struct PosixSharedMutex *) mutex->instanceData;
     int feedback = pthread_mutex_unlock(posixSharedMutex->pMutex);
     if (feedback != 0) {
-        return MutexErrorCode_PTHREAD_MUTEX_UNLOCK_FAILED;
+        return MutexReturnCode_ERROR;
     }
-    return MutexErrorCode_SUCCESS;
+    return MutexReturnCode_SUCCESS;
 }
