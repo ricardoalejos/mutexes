@@ -83,6 +83,7 @@ MutexReturnCode PosixSharedMutex_create(
         pthread_mutexattr_t attributes;
         pthread_mutexattr_init(&attributes);
         pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_SHARED);
+        pthread_mutexattr_setrobust (&attributes, PTHREAD_MUTEX_ROBUST);
         pthread_mutex_init(posixSharedMutex->pMutex, &attributes);
     }
     *mutex = &(posixSharedMutex->base);
@@ -129,9 +130,13 @@ static MutexReturnCode take(Mutex * mutex) {
         return MutexReturnCode_SUCCESS;
     } else if (feedback == ETIMEDOUT) {
         return MutexReturnCode_ERROR;
-    } else {
-        return MutexReturnCode_ERROR;
+    } else if (feedback == EOWNERDEAD) {
+        feedback = pthread_mutex_consistent(posixSharedMutex->pMutex);
+        if (feedback) {
+            return MutexReturnCode_ERROR;
+        }
     }
+    return MutexReturnCode_ERROR;
 }
 
 static MutexReturnCode release(Mutex * mutex) {
